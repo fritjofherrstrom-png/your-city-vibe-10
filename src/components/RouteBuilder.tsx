@@ -1,6 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CITIES, VIBES, type Vibe } from "@/data/cities";
+import {
+  getCityWideSignals,
+  getNeighborhoodAdvice,
+  getPulseSignalsForStop,
+} from "@/lib/pulse-match";
+import { ROME_PULSE } from "@/data/pulse";
 
 // Demon fokuserar på Rom — Stockholm och Prag finns kvar i datan för senare.
 const ROME = CITIES.find((c) => c.id === "rome")!;
@@ -8,6 +14,9 @@ const ROME = CITIES.find((c) => c.id === "rome")!;
 export function RouteBuilder() {
   const [vibe, setVibe] = useState<Vibe>("slow");
   const route = ROME.routes[vibe];
+
+  const cityWide = useMemo(() => getCityWideSignals(vibe), [vibe]);
+  const hoodAdvice = useMemo(() => getNeighborhoodAdvice(), []);
 
   return (
     <section id="route" className="bg-background py-24 md:py-32">
@@ -85,51 +94,116 @@ export function RouteBuilder() {
               </div>
             </div>
 
-            <ol className="space-y-0 border-t border-foreground/20">
-              {route.stops.map((stop, i) => (
-                <motion.li
-                  key={`${stop.title}-${i}`}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: i * 0.06 }}
-                  className="grid grid-cols-12 gap-4 md:gap-8 py-8 border-b border-foreground/15 group hover:bg-sand/50 transition-colors px-2 -mx-2"
-                >
-                  <div className="col-span-3 md:col-span-2">
-                    <div className="font-mono text-xs text-muted-foreground">
-                      {String(i + 1).padStart(2, "0")}
-                    </div>
-                    <div className="font-display text-2xl md:text-3xl mt-1">{stop.time}</div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-2">
-                      {stop.duration}
-                    </div>
-                  </div>
+            {/* ── Pulse-banner: stadens rytm för vald vibe ─────────────── */}
+            {(cityWide.length > 0 || hoodAdvice.length > 0) && (
+              <div className="mb-10 border-l-2 border-terracotta bg-sand/40 px-5 py-5 md:px-7 md:py-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full bg-terracotta"
+                    style={{ animation: "pulseDot 2.4s ease-in-out infinite" }}
+                  />
+                  <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                    Puls påverkar din dag · {ROME_PULSE.weekdayLabel} {ROME_PULSE.dateLabel}
+                  </p>
+                </div>
+                <ul className="space-y-3">
+                  {cityWide.slice(0, 2).map((s) => (
+                    <li key={s.id} className="flex gap-3 text-pretty">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-terracotta shrink-0 mt-1">
+                        {s.kind}
+                      </span>
+                      <p className="text-[0.95rem] leading-snug">
+                        <span className="font-display italic">{s.title}</span>
+                        <span className="text-muted-foreground"> — {s.whyItMatters}</span>
+                      </p>
+                    </li>
+                  ))}
+                  {hoodAdvice.slice(0, 1).map((s) => (
+                    <li key={s.id} className="flex gap-3 text-pretty">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-terracotta shrink-0 mt-1">
+                        {s.kind}
+                      </span>
+                      <p className="text-[0.95rem] leading-snug">
+                        <span className="font-display italic">{s.title}</span>
+                        <span className="text-muted-foreground"> — {s.whyItMatters}</span>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-                  <div className="col-span-9 md:col-span-7">
-                    <div className="flex items-baseline gap-3 flex-wrap">
-                      <h4 className="font-display text-2xl md:text-3xl group-hover:text-accent transition-colors">
-                        {stop.title}
-                      </h4>
+            <ol className="space-y-0 border-t border-foreground/20">
+              {route.stops.map((stop, i) => {
+                const stopSignals = getPulseSignalsForStop(stop, vibe);
+                return (
+                  <motion.li
+                    key={`${stop.title}-${i}`}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.06 }}
+                    className="grid grid-cols-12 gap-4 md:gap-8 py-8 border-b border-foreground/15 group hover:bg-sand/50 transition-colors px-2 -mx-2"
+                  >
+                    <div className="col-span-3 md:col-span-2">
+                      <div className="font-mono text-xs text-muted-foreground">
+                        {String(i + 1).padStart(2, "0")}
+                      </div>
+                      <div className="font-display text-2xl md:text-3xl mt-1">{stop.time}</div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-2">
+                        {stop.duration}
+                      </div>
+                    </div>
+
+                    <div className="col-span-9 md:col-span-7">
+                      <div className="flex items-baseline gap-3 flex-wrap">
+                        <h4 className="font-display text-2xl md:text-3xl group-hover:text-accent transition-colors">
+                          {stop.title}
+                        </h4>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                          {stop.type}
+                        </span>
+                        {stopSignals.length > 0 && (
+                          <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-terracotta border border-terracotta/50 px-1.5 py-0.5">
+                            ◉ puls
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 text-base leading-relaxed text-pretty max-w-prose">
+                        {stop.blurb}
+                      </p>
+                      {stop.tip && (
+                        <p className="mt-3 text-sm italic font-display text-accent">
+                          ↳ {stop.tip}
+                        </p>
+                      )}
+
+                      {/* Pulse-annoteringar för detta stopp */}
+                      {stopSignals.map((sig) => (
+                        <div
+                          key={sig.id}
+                          className="mt-4 pl-3 border-l-2 border-terracotta/60"
+                        >
+                          <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-terracotta mb-1">
+                            {sig.kind} · {sig.when}
+                          </p>
+                          <p className="text-sm font-display italic text-pretty">
+                            {sig.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1 text-pretty">
+                            {sig.whyItMatters}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="hidden md:block md:col-span-3 text-right">
                       <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                        {stop.type}
+                        ◉ {stop.neighborhood}
                       </span>
                     </div>
-                    <p className="mt-3 text-base leading-relaxed text-pretty max-w-prose">
-                      {stop.blurb}
-                    </p>
-                    {stop.tip && (
-                      <p className="mt-3 text-sm italic font-display text-accent">
-                        ↳ {stop.tip}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="hidden md:block md:col-span-3 text-right">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                      ◉ {stop.neighborhood}
-                    </span>
-                  </div>
-                </motion.li>
-              ))}
+                  </motion.li>
+                );
+              })}
             </ol>
 
             <div className="mt-12 flex flex-wrap items-center justify-between gap-4 p-6 border border-foreground/30 bg-sand/40">
