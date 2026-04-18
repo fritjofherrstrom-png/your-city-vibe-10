@@ -43,27 +43,24 @@ export function Hero() {
             className="mt-10 flex flex-wrap items-center gap-4"
           >
             <a
-              href="#cities"
+              href="#pulse"
               className="bg-foreground text-background px-7 py-4 text-sm font-mono uppercase tracking-[0.18em] hover:bg-accent transition-colors"
             >
-              Välj en stad →
+              Se vad som händer just nu →
             </a>
             <a
-              href="#concept"
+              href="#route"
               className="text-sm font-mono uppercase tracking-[0.18em] underline decoration-foreground/30 underline-offset-8 hover:decoration-accent hover:text-accent transition-colors"
             >
-              Hur det fungerar
+              Bygg din dag
             </a>
           </motion.div>
 
-          <div className="mt-16 flex items-center gap-8 text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
-            <span>Rom</span>
+          <div className="mt-16 flex items-center gap-4 text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent" />
+            <span>Demo · Rom · torsdag 18 april 2026</span>
             <span className="opacity-30">/</span>
-            <span>Stockholm</span>
-            <span className="opacity-30">/</span>
-            <span>Prag</span>
-            <span className="opacity-30">/</span>
-            <span className="opacity-50">Fler snart</span>
+            <span className="opacity-50">Stockholm & Prag snart</span>
           </div>
         </div>
 
