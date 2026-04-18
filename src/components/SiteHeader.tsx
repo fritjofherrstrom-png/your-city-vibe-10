@@ -10,15 +10,15 @@ export function SiteHeader() {
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm">
           <a href="#concept" className="hover:text-accent transition-colors">Konceptet</a>
-          <a href="#cities" className="hover:text-accent transition-colors">Städer</a>
-          <a href="#route" className="hover:text-accent transition-colors">Demo-rutt</a>
+          <a href="#pulse" className="hover:text-accent transition-colors">Just nu i Rom</a>
+          <a href="#route" className="hover:text-accent transition-colors">Bygg din dag</a>
           <a href="#manifesto" className="hover:text-accent transition-colors">Manifest</a>
         </nav>
         <a
-          href="#cities"
+          href="#pulse"
           className="text-xs font-mono uppercase tracking-[0.18em] border border-foreground px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
         >
-          Bygg en dag
+          Se pulsen
         </a>
       </div>
     </header>
