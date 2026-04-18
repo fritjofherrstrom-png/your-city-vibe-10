@@ -1,6 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CITIES, VIBES, type Vibe } from "@/data/cities";
+import {
+  getCityWideSignals,
+  getNeighborhoodAdvice,
+  getPulseSignalsForStop,
+} from "@/lib/pulse-match";
+import { ROME_PULSE } from "@/data/pulse";
 
 // Demon fokuserar på Rom — Stockholm och Prag finns kvar i datan för senare.
 const ROME = CITIES.find((c) => c.id === "rome")!;
@@ -8,6 +14,9 @@ const ROME = CITIES.find((c) => c.id === "rome")!;
 export function RouteBuilder() {
   const [vibe, setVibe] = useState<Vibe>("slow");
   const route = ROME.routes[vibe];
+
+  const cityWide = useMemo(() => getCityWideSignals(vibe), [vibe]);
+  const hoodAdvice = useMemo(() => getNeighborhoodAdvice(), []);
 
   return (
     <section id="route" className="bg-background py-24 md:py-32">
