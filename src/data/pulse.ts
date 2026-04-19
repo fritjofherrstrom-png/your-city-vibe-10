@@ -16,6 +16,10 @@ export type PulseItem = {
   where: string;
   /** När i dag — fri text, t.ex. "hela dagen", "från 19:00", "21–23" */
   when: string;
+  /** Maskinläsbar starttid HH:mm (lokal tid). Saknas = gäller hela dagen. */
+  startsAt?: string;
+  /** Maskinläsbar sluttid HH:mm. Saknas = okänt slut. */
+  endsAt?: string;
   /** Beskrivande text — ska kännas som en lokal som berättar */
   blurb: string;
   /** "Varför det spelar roll för din dag" — kärnan i temporal intelligence */
