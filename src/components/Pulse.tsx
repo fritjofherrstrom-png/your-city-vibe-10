@@ -53,7 +53,7 @@ export function Pulse() {
   const setDay = (i: number) => {
     navigate({
       to: "/",
-      search: (prev) => ({ ...prev, day: i }),
+      search: (prev: TripSearch) => ({ ...prev, day: i }),
       hash: "pulse",
     });
   };
