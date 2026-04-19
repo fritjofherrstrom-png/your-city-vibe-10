@@ -292,6 +292,11 @@ export function RouteBuilder() {
                             ⚠ över din promenadgräns
                           </span>
                         )}
+                        {rainMode && isIndoor(stop) && (
+                          <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent border border-accent/50 px-1.5 py-0.5">
+                            ▣ torrt val
+                          </span>
+                        )}
                       </div>
 
                       {/* Walk-time annoteringar */}
