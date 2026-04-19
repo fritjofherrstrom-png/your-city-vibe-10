@@ -75,6 +75,9 @@ export function RouteBuilder() {
   );
   const hoodAdvice = useMemo(() => getNeighborhoodAdvice(activeDay), [activeDay]);
 
+  const weather = useMemo(() => getWeather(activeDay.date), [activeDay.date]);
+  const rainMode = isRainMode(weather);
+
   const setVibe = (v: Vibe) => {
     navigate({
       to: "/",
