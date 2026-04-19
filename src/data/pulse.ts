@@ -479,6 +479,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Pigneto har sin egen måndagskväll",
         where: "Pigneto",
         when: "Från 21",
+        startsAt: "21:00",
+        endsAt: "00:30",
         blurb:
           "Necci dal 1924 har akustisk konsert varje måndag. Konstnärer, musiker, kvarterspublik. Ingen entré.",
         whyItMatters:
@@ -492,6 +494,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Centrale Montemartini — öppet idag",
         where: "Via Ostiense 106, Ostiense",
         when: "09:30–19",
+        startsAt: "09:30",
+        endsAt: "19:00",
         blurb:
           "Antika statyer i ett gammalt elkraftverk. Surrealistiskt. En av de få museerna öppna på måndag — och en av Roms bästa.",
         whyItMatters:
