@@ -209,6 +209,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Campo de' Fiori-marknaden packas tidigt",
         where: "Campo de' Fiori, Centro",
         when: "07–13:30",
+        startsAt: "07:00",
+        endsAt: "13:30",
         blurb:
           "Fredagsmarknaden är störst i veckan. Blommor, kronärtskockor, första körsbären om vädret hållit. Lugnast 09–10:30.",
         whyItMatters:
@@ -222,6 +224,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Testaccio går igång efter midnatt",
         where: "Via di Monte Testaccio",
         when: "Från 23:30",
+        startsAt: "23:30",
+        endsAt: "04:00",
         blurb:
           "Hela kullen är klubbar och livescener. På fredagar drar Goa och Akab fullt. 20€-25€ entré, fri innan midnatt på vissa.",
         whyItMatters:
@@ -235,6 +239,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Streetart-tour i Ostiense kl 17",
         where: "Mötesplats: Garbatella metro",
         when: "17:00–19:00",
+        startsAt: "17:00",
+        endsAt: "19:00",
         blurb:
           "Lokala konstnärer guidar genom Blu, Sten Lex, JB Rock. Donation-baserat, säg till på Instagram @999contemporary.",
         whyItMatters:
