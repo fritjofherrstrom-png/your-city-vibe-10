@@ -109,9 +109,24 @@ export function RouteBuilder() {
             <span className="font-display">
               Promenad: {walkLimit} min · {walkLabel(walkLimit)}
             </span>
+            <span className="font-display flex items-center gap-1.5">
+              <span aria-hidden>{CONDITION_GLYPH[weather.condition]}</span>
+              {weather.highC}° · {CONDITION_LABEL[weather.condition]}
+            </span>
           </div>
           <TripPlanner />
         </div>
+
+        {rainMode && (
+          <div className="mb-10 border-l-2 border-accent bg-accent/10 px-5 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-1">
+              ☔ Regnläge · {weather.rainChance}% regn
+            </p>
+            <p className="font-display italic text-base text-pretty">
+              {weather.blurb} Inomhus-stopp markeras med <span className="not-italic">▣ torrt val</span> nedan — prioritera dem på eftermiddagen.
+            </p>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-12 gap-12 mb-12">
           <div className="md:col-span-5">
