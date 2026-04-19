@@ -197,6 +197,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Fredagsaperitivon börjar 18:00",
         where: "Hela staden",
         when: "18–21",
+        startsAt: "18:00",
+        endsAt: "21:00",
         blurb:
           "Romarna jobbar långa dagar men tar helg sent. Mellan 18 och 21 är varje bar i centro full. Efter 21:30 lugnar det och man hittar bord.",
         whyItMatters:
