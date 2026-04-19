@@ -306,6 +306,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Mercato Monti — bästa lördagen",
         where: "Via Leonina, Monti",
         when: "10–20",
+        startsAt: "10:00",
+        endsAt: "20:00",
         blurb:
           "Dubbelt så stort på lördagar. Live-DJ från 16. Lokala designers du inte hittar på nätet.",
         whyItMatters:
@@ -332,6 +334,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Naturvin från Frascati på Litro",
         where: "Monteverde",
         when: "19:00, fyra viner + tilltugg",
+        startsAt: "19:00",
+        endsAt: "22:00",
         blurb:
           "Frascati Superiore från små producenter. Vit vulkanjord, mineralisk. 30€, boka via DM.",
         whyItMatters:
@@ -395,6 +399,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Aventino fylls från 19:30",
         where: "Giardino degli Aranci",
         when: "19:30 → 21 (avgång fackeltåg)",
+        startsAt: "19:30",
+        endsAt: "21:30",
         blurb:
           "Apelsinträdgården och nyckelhålet — vanliga turistmål — är fyllda av romare i dag. Pukor, fanor, en stilla högtid.",
         whyItMatters:
@@ -408,6 +414,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Historisk parad på Circo Massimo",
         where: "Circo Massimo",
         when: "14:00 och 16:00",
+        startsAt: "14:00",
+        endsAt: "17:30",
         blurb:
           "2000+ skådespelare i romersk dräkt. Senatorer, legioner, vestaler. 70 min, gratis.",
         whyItMatters:
