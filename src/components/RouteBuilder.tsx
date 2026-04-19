@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { CITIES, VIBES, type Vibe } from "@/data/cities";
+import { CITIES, VIBES, type Stop, type Vibe } from "@/data/cities";
 import {
   getCityWideSignals,
   getNeighborhoodAdvice,
@@ -11,6 +11,38 @@ import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
 import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
 import { walkLabel, type TripSearch } from "@/lib/trip";
 import { TripPlanner } from "@/components/TripPlanner";
+import { getWeather, isRainMode, CONDITION_GLYPH, CONDITION_LABEL } from "@/lib/weather";
+
+/** Stop-typer som räknas som "inomhus" — funkar bra i regn. */
+const INDOOR_TYPES = new Set([
+  "Museum",
+  "Konst",
+  "Konsthall",
+  "Bokhandel",
+  "Bar",
+  "Cocktails",
+  "Vin",
+  "Vinbar",
+  "Klubb",
+  "Pivnice",
+  "Hak",
+  "Caffè",
+  "Kaffe",
+  "Fika",
+  "Lunch",
+  "Middag",
+  "Smörgås",
+  "Cocktail",
+  "Aperitivo",
+  "Aperitif",
+  "Apertivo",
+  "Hemlighet",
+  "Arkitektur",
+]);
+
+function isIndoor(stop: Stop): boolean {
+  return INDOOR_TYPES.has(stop.type);
+}
 
 const ROME = CITIES.find((c) => c.id === "rome")!;
 
@@ -43,6 +75,9 @@ export function RouteBuilder() {
   );
   const hoodAdvice = useMemo(() => getNeighborhoodAdvice(activeDay), [activeDay]);
 
+  const weather = useMemo(() => getWeather(activeDay.date), [activeDay.date]);
+  const rainMode = isRainMode(weather);
+
   const setVibe = (v: Vibe) => {
     navigate({
       to: "/",
@@ -74,9 +109,24 @@ export function RouteBuilder() {
             <span className="font-display">
               Promenad: {walkLimit} min · {walkLabel(walkLimit)}
             </span>
+            <span className="font-display flex items-center gap-1.5">
+              <span aria-hidden>{CONDITION_GLYPH[weather.condition]}</span>
+              {weather.highC}° · {CONDITION_LABEL[weather.condition]}
+            </span>
           </div>
           <TripPlanner />
         </div>
+
+        {rainMode && (
+          <div className="mb-10 border-l-2 border-accent bg-accent/10 px-5 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-1">
+              ☔ Regnläge · {weather.rainChance}% regn
+            </p>
+            <p className="font-display italic text-base text-pretty">
+              {weather.blurb} Inomhus-stopp markeras med <span className="not-italic">▣ torrt val</span> nedan — prioritera dem på eftermiddagen.
+            </p>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-12 gap-12 mb-12">
           <div className="md:col-span-5">
@@ -240,6 +290,11 @@ export function RouteBuilder() {
                         {overLimit && (
                           <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-destructive border border-destructive/50 px-1.5 py-0.5">
                             ⚠ över din promenadgräns
+                          </span>
+                        )}
+                        {rainMode && isIndoor(stop) && (
+                          <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent border border-accent/50 px-1.5 py-0.5">
+                            ▣ torrt val
                           </span>
                         )}
                       </div>

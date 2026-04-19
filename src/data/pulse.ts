@@ -16,6 +16,10 @@ export type PulseItem = {
   where: string;
   /** När i dag — fri text, t.ex. "hela dagen", "från 19:00", "21–23" */
   when: string;
+  /** Maskinläsbar starttid HH:mm (lokal tid). Saknas = gäller hela dagen. */
+  startsAt?: string;
+  /** Maskinläsbar sluttid HH:mm. Saknas = okänt slut. */
+  endsAt?: string;
   /** Beskrivande text — ska kännas som en lokal som berättar */
   blurb: string;
   /** "Varför det spelar roll för din dag" — kärnan i temporal intelligence */
@@ -66,6 +70,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Inget derby i kväll — men Lazio spelar i Europa League",
         where: "Stadio Olimpico + barer i Prati",
         when: "Avspark 21:00",
+        startsAt: "21:00",
+        endsAt: "23:00",
         blurb:
           "Inte derbyt, men tillräckligt för att Prati och Flaminio ska vara fulla av blå tröjor från 18:00. Tunnelbana A blir överfull mellan 19 och 20.",
         whyItMatters:
@@ -92,6 +98,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Mercato Monti har öppnat för säsongen",
         where: "Via Leonina, Monti",
         when: "10–20",
+        startsAt: "10:00",
+        endsAt: "20:00",
         blurb:
           "Vintage, unga designers, vinyl, italienskt hantverk. Andra helgen efter påsk är alltid den bästa — full uppställning, lugnt tempo, säljarna pratar.",
         whyItMatters:
@@ -105,6 +113,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Piazza-spelning på Largo Spartaco",
         where: "Pigneto",
         when: "Från 19:30, spontant",
+        startsAt: "19:30",
+        endsAt: "23:00",
         blurb:
           "Två killar med dragspel och gitarr drar upp varje torsdag när vädret tillåter. Stornello, lite Lucio Battisti, någon som ropar Sara perché ti amo runt 22. Ingen affisch, ingen entré.",
         whyItMatters:
@@ -118,6 +128,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Trastevere är full av studiegrupper i kväll",
         where: "Piazza Santa Maria + omkring",
         when: "Från 20:00",
+        startsAt: "20:00",
+        endsAt: "23:30",
         blurb:
           "Vårterminens utbytesstudenter har precis upptäckt aperitivo. Det är charmigt en gång. Inte två.",
         whyItMatters:
@@ -130,6 +142,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Trio italiano på Gregory's",
         where: "Via Gregoriana 54a, vid Spanska trappan",
         when: "Två set: 22:00 och 23:30",
+        startsAt: "22:00",
+        endsAt: "00:30",
         blurb:
           "Lokal trio, standards och en del Pino Daniele. Mörkt rum, rött ljus, bartendern minns vad du drack förra gången. Ingen entré, en drink-minimum.",
         whyItMatters:
@@ -143,6 +157,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Hotel Locarnos takbar öppnar i kväll",
         where: "Via della Penna 22, nära Piazza del Popolo",
         when: "Från 18:30",
+        startsAt: "18:30",
+        endsAt: "01:00",
         blurb:
           "Första kvällen för säsongen. Liberty-stil, vinrankor, utsikt mot Villa Borghese. Negroni 14 €, men du betalar för utsikten och för att vara där den första kvällen.",
         whyItMatters:
@@ -181,6 +197,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Fredagsaperitivon börjar 18:00",
         where: "Hela staden",
         when: "18–21",
+        startsAt: "18:00",
+        endsAt: "21:00",
         blurb:
           "Romarna jobbar långa dagar men tar helg sent. Mellan 18 och 21 är varje bar i centro full. Efter 21:30 lugnar det och man hittar bord.",
         whyItMatters:
@@ -193,6 +211,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Campo de' Fiori-marknaden packas tidigt",
         where: "Campo de' Fiori, Centro",
         when: "07–13:30",
+        startsAt: "07:00",
+        endsAt: "13:30",
         blurb:
           "Fredagsmarknaden är störst i veckan. Blommor, kronärtskockor, första körsbären om vädret hållit. Lugnast 09–10:30.",
         whyItMatters:
@@ -206,6 +226,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Testaccio går igång efter midnatt",
         where: "Via di Monte Testaccio",
         when: "Från 23:30",
+        startsAt: "23:30",
+        endsAt: "04:00",
         blurb:
           "Hela kullen är klubbar och livescener. På fredagar drar Goa och Akab fullt. 20€-25€ entré, fri innan midnatt på vissa.",
         whyItMatters:
@@ -219,6 +241,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Streetart-tour i Ostiense kl 17",
         where: "Mötesplats: Garbatella metro",
         when: "17:00–19:00",
+        startsAt: "17:00",
+        endsAt: "19:00",
         blurb:
           "Lokala konstnärer guidar genom Blu, Sten Lex, JB Rock. Donation-baserat, säg till på Instagram @999contemporary.",
         whyItMatters:
@@ -282,6 +306,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Mercato Monti — bästa lördagen",
         where: "Via Leonina, Monti",
         when: "10–20",
+        startsAt: "10:00",
+        endsAt: "20:00",
         blurb:
           "Dubbelt så stort på lördagar. Live-DJ från 16. Lokala designers du inte hittar på nätet.",
         whyItMatters:
@@ -308,6 +334,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Naturvin från Frascati på Litro",
         where: "Monteverde",
         when: "19:00, fyra viner + tilltugg",
+        startsAt: "19:00",
+        endsAt: "22:00",
         blurb:
           "Frascati Superiore från små producenter. Vit vulkanjord, mineralisk. 30€, boka via DM.",
         whyItMatters:
@@ -371,6 +399,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Aventino fylls från 19:30",
         where: "Giardino degli Aranci",
         when: "19:30 → 21 (avgång fackeltåg)",
+        startsAt: "19:30",
+        endsAt: "21:30",
         blurb:
           "Apelsinträdgården och nyckelhålet — vanliga turistmål — är fyllda av romare i dag. Pukor, fanor, en stilla högtid.",
         whyItMatters:
@@ -384,6 +414,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Historisk parad på Circo Massimo",
         where: "Circo Massimo",
         when: "14:00 och 16:00",
+        startsAt: "14:00",
+        endsAt: "17:30",
         blurb:
           "2000+ skådespelare i romersk dräkt. Senatorer, legioner, vestaler. 70 min, gratis.",
         whyItMatters:
@@ -447,6 +479,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Pigneto har sin egen måndagskväll",
         where: "Pigneto",
         when: "Från 21",
+        startsAt: "21:00",
+        endsAt: "00:30",
         blurb:
           "Necci dal 1924 har akustisk konsert varje måndag. Konstnärer, musiker, kvarterspublik. Ingen entré.",
         whyItMatters:
@@ -460,6 +494,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Centrale Montemartini — öppet idag",
         where: "Via Ostiense 106, Ostiense",
         when: "09:30–19",
+        startsAt: "09:30",
+        endsAt: "19:00",
         blurb:
           "Antika statyer i ett gammalt elkraftverk. Surrealistiskt. En av de få museerna öppna på måndag — och en av Roms bästa.",
         whyItMatters:
