@@ -1,26 +1,83 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { CITIES, VIBES, type Vibe } from "@/data/cities";
 import {
   getCityWideSignals,
   getNeighborhoodAdvice,
   getPulseSignalsForStop,
 } from "@/lib/pulse-match";
-import { ROME_PULSE } from "@/data/pulse";
+import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
+import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
+import { walkLabel, type TripSearch } from "@/lib/trip";
+import { TripPlanner } from "@/components/TripPlanner";
 
-// Demon fokuserar på Rom — Stockholm och Prag finns kvar i datan för senare.
 const ROME = CITIES.find((c) => c.id === "rome")!;
 
 export function RouteBuilder() {
-  const [vibe, setVibe] = useState<Vibe>("slow");
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/" }) as TripSearch;
+  const vibe = search.vibe as Vibe;
+  const homeZone = search.zone as RomeZone;
+  const walkLimit = search.walk;
+
   const route = ROME.routes[vibe];
 
-  const cityWide = useMemo(() => getCityWideSignals(vibe), [vibe]);
-  const hoodAdvice = useMemo(() => getNeighborhoodAdvice(), []);
+  // Vilken pulse-dag visar vi i ruttens kontext?
+  const tripDayCount = useMemo(() => {
+    const start = new Date(search.start + "T00:00:00");
+    const end = new Date(search.end + "T00:00:00");
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+    return Math.min(
+      ROME_PULSE_DAYS.length,
+      Math.round((end.getTime() - start.getTime()) / 86400000) + 1,
+    );
+  }, [search.start, search.end]);
+
+  const dayIndex = Math.min(search.day, tripDayCount - 1);
+  const activeDay = ROME_PULSE_DAYS[dayIndex] ?? getPulseDay(undefined);
+
+  const cityWide = useMemo(
+    () => getCityWideSignals(vibe, activeDay),
+    [vibe, activeDay],
+  );
+  const hoodAdvice = useMemo(() => getNeighborhoodAdvice(activeDay), [activeDay]);
+
+  const setVibe = (v: Vibe) => {
+    navigate({
+      to: "/",
+      search: (prev: TripSearch) => ({ ...prev, vibe: v }),
+      hash: "route",
+    });
+  };
 
   return (
     <section id="route" className="bg-background py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6">
+        {/* Trip-summary banner — visar vad URL-state säger om resan */}
+        <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border border-foreground/20 bg-sand/50 px-5 py-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              Din resa
+            </span>
+            <span className="font-display">
+              {activeDay.weekdayLabel} {activeDay.dateLabel}
+              {tripDayCount > 1 && (
+                <span className="text-muted-foreground">
+                  {" "}· dag {dayIndex + 1} av {tripDayCount}
+                </span>
+              )}
+            </span>
+            <span className="font-display">
+              Bor i <em className="italic">{homeZone}</em>
+            </span>
+            <span className="font-display">
+              Promenad: {walkLimit} min · {walkLabel(walkLimit)}
+            </span>
+          </div>
+          <TripPlanner />
+        </div>
+
         <div className="grid md:grid-cols-12 gap-12 mb-12">
           <div className="md:col-span-5">
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-4">
@@ -32,7 +89,7 @@ export function RouteBuilder() {
             </h2>
             <p className="mt-6 text-muted-foreground max-w-md">
               Samma stad, fyra helt olika dagar. Rutten anpassas till vad som faktiskt händer
-              just i dag — det du läste i Puls ovan.
+              just i dag — och hur långt du orkar gå från {homeZone}.
             </p>
           </div>
 
@@ -69,7 +126,7 @@ export function RouteBuilder() {
         {/* Route output */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={vibe}
+            key={`${vibe}-${dayIndex}-${homeZone}-${walkLimit}`}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
@@ -94,7 +151,7 @@ export function RouteBuilder() {
               </div>
             </div>
 
-            {/* ── Pulse-banner: stadens rytm för vald vibe ─────────────── */}
+            {/* ── Pulse-banner ─────────────── */}
             {(cityWide.length > 0 || hoodAdvice.length > 0) && (
               <div className="mb-10 border-l-2 border-terracotta bg-sand/40 px-5 py-5 md:px-7 md:py-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -103,7 +160,7 @@ export function RouteBuilder() {
                     style={{ animation: "pulseDot 2.4s ease-in-out infinite" }}
                   />
                   <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                    Puls påverkar din dag · {ROME_PULSE.weekdayLabel} {ROME_PULSE.dateLabel}
+                    Puls påverkar din dag · {activeDay.weekdayLabel} {activeDay.dateLabel}
                   </p>
                 </div>
                 <ul className="space-y-3">
@@ -135,7 +192,20 @@ export function RouteBuilder() {
 
             <ol className="space-y-0 border-t border-foreground/20">
               {route.stops.map((stop, i) => {
-                const stopSignals = getPulseSignalsForStop(stop, vibe);
+                const stopSignals = getPulseSignalsForStop(stop, vibe, activeDay);
+                const stopZone = neighborhoodToZone(stop.neighborhood);
+                const fromHome = stopZone ? walkMinutesBetween(homeZone, stopZone) : null;
+                const fromPrev = (() => {
+                  if (i === 0) return null;
+                  const prev = route.stops[i - 1];
+                  const prevZone = neighborhoodToZone(prev.neighborhood);
+                  if (!prevZone || !stopZone) return null;
+                  return walkMinutesBetween(prevZone, stopZone);
+                })();
+                const overLimit =
+                  (fromPrev !== null && fromPrev > walkLimit) ||
+                  (i === 0 && fromHome !== null && fromHome > walkLimit);
+
                 return (
                   <motion.li
                     key={`${stop.title}-${i}`}
@@ -167,7 +237,23 @@ export function RouteBuilder() {
                             ◉ puls
                           </span>
                         )}
+                        {overLimit && (
+                          <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-destructive border border-destructive/50 px-1.5 py-0.5">
+                            ⚠ över din promenadgräns
+                          </span>
+                        )}
                       </div>
+
+                      {/* Walk-time annoteringar */}
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        {i === 0 && fromHome !== null && (
+                          <span>↳ {fromHome} min från {homeZone}</span>
+                        )}
+                        {fromPrev !== null && (
+                          <span>↳ {fromPrev} min från förra stoppet</span>
+                        )}
+                      </div>
+
                       <p className="mt-3 text-base leading-relaxed text-pretty max-w-prose">
                         {stop.blurb}
                       </p>
