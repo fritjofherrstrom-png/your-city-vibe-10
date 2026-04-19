@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
-import { ROME_PULSE, type PulseLevel } from "@/data/pulse";
+import { useMemo } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { ROME_PULSE_DAYS, type PulseLevel } from "@/data/pulse";
+import type { TripSearch } from "@/lib/trip";
 
 const LEVEL_META: Record<PulseLevel, { label: string; sub: string; mark: string }> = {
   city: {
@@ -23,20 +25,41 @@ const LEVEL_META: Record<PulseLevel, { label: string; sub: string; mark: string 
 const LEVEL_ORDER: PulseLevel[] = ["city", "neighborhood", "venue"];
 
 export function Pulse() {
-  const [activeLevel, setActiveLevel] = useState<PulseLevel | "all">("all");
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/" }) as TripSearch;
+
+  // Aktiv dag — bestäms av URL-state. Visa alla dagar inom resans intervall.
+  const tripDayCount = useMemo(() => {
+    const start = new Date(search.start + "T00:00:00");
+    const end = new Date(search.end + "T00:00:00");
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+    return Math.min(
+      ROME_PULSE_DAYS.length,
+      Math.round((end.getTime() - start.getTime()) / 86400000) + 1,
+    );
+  }, [search.start, search.end]);
+
+  const dayIndex = Math.min(search.day, tripDayCount - 1);
+  const activeDay = ROME_PULSE_DAYS[dayIndex] ?? ROME_PULSE_DAYS[0];
+  const upcomingDays = ROME_PULSE_DAYS.slice(dayIndex + 1, tripDayCount);
 
   const grouped = useMemo(() => {
     return LEVEL_ORDER.map((lvl) => ({
       level: lvl,
-      items: ROME_PULSE.items.filter((i) => i.level === lvl),
+      items: activeDay.items.filter((i) => i.level === lvl),
     }));
-  }, []);
+  }, [activeDay]);
 
-  const visible = activeLevel === "all" ? grouped : grouped.filter((g) => g.level === activeLevel);
+  const setDay = (i: number) => {
+    navigate({
+      to: "/",
+      search: (prev) => ({ ...prev, day: i }),
+      hash: "pulse",
+    });
+  };
 
   return (
     <section id="pulse" className="bg-ink text-paper py-24 md:py-32 grain relative overflow-hidden">
-      {/* Subtle terracotta blob — like a stamp on newsprint */}
       <div
         aria-hidden
         className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full opacity-20 blur-3xl"
@@ -45,14 +68,12 @@ export function Pulse() {
 
       <div className="mx-auto max-w-7xl px-6 relative">
         {/* Masthead */}
-        <div className="grid md:grid-cols-12 gap-8 items-end mb-16 md:mb-20">
+        <div className="grid md:grid-cols-12 gap-8 items-end mb-12">
           <div className="md:col-span-8">
             <div className="flex items-center gap-3 mb-6">
               <span
                 className="inline-block w-2 h-2 rounded-full bg-terracotta"
-                style={{
-                  animation: "pulseDot 2.4s ease-in-out infinite",
-                }}
+                style={{ animation: "pulseDot 2.4s ease-in-out infinite" }}
               />
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-paper/70">
                 Live · uppdaterad just nu
@@ -60,15 +81,15 @@ export function Pulse() {
             </div>
 
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-paper/60 mb-3">
-              § Just nu i Rom · {ROME_PULSE.weekdayLabel} {ROME_PULSE.dateLabel}
+              § Just nu i Rom · {activeDay.weekdayLabel} {activeDay.dateLabel}
             </p>
 
             <h2 className="font-display text-4xl md:text-6xl leading-[1.02] tracking-tight text-balance">
-              {ROME_PULSE.headline}
+              {activeDay.headline}
             </h2>
 
             <p className="mt-6 font-display italic text-lg md:text-xl text-paper/75 max-w-2xl text-pretty">
-              {ROME_PULSE.subhead}
+              {activeDay.subhead}
             </p>
           </div>
 
@@ -77,45 +98,47 @@ export function Pulse() {
               Edition
             </p>
             <p className="font-display text-2xl">
-              <time dateTime={ROME_PULSE.date}>
-                {ROME_PULSE.weekdayLabel}
+              <time dateTime={activeDay.date}>
+                {activeDay.weekdayLabel}
                 <br />
-                {ROME_PULSE.dateLabel}
+                {activeDay.dateLabel}
               </time>
             </p>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-paper/40 mt-3">
-              {ROME_PULSE.items.length} signaler · 3 nivåer
+              {activeDay.items.length} signaler · 3 nivåer
             </p>
           </div>
         </div>
 
-        {/* Filter */}
-        <div className="flex flex-wrap items-center gap-2 mb-12 border-y border-paper/15 py-4">
-          <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-paper/50 mr-2">
-            Filtrera
-          </span>
-          <FilterChip active={activeLevel === "all"} onClick={() => setActiveLevel("all")}>
-            Allt ({ROME_PULSE.items.length})
-          </FilterChip>
-          {LEVEL_ORDER.map((lvl) => {
-            const count = ROME_PULSE.items.filter((i) => i.level === lvl).length;
-            return (
-              <FilterChip
-                key={lvl}
-                active={activeLevel === lvl}
-                onClick={() => setActiveLevel(lvl)}
-              >
-                {LEVEL_META[lvl].label} ({count})
-              </FilterChip>
-            );
-          })}
-        </div>
+        {/* Day tabs — visa bara om resan är längre än en dag */}
+        {tripDayCount > 1 && (
+          <div className="flex flex-wrap items-center gap-2 mb-12 border-y border-paper/15 py-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-paper/50 mr-2">
+              Dag
+            </span>
+            {ROME_PULSE_DAYS.slice(0, tripDayCount).map((d, i) => {
+              const active = i === dayIndex;
+              return (
+                <button
+                  key={d.date}
+                  onClick={() => setDay(i)}
+                  className={`font-mono text-[10px] uppercase tracking-[0.2em] px-3 py-2 border transition-colors ${
+                    active
+                      ? "border-terracotta bg-terracotta text-paper"
+                      : "border-paper/25 text-paper/70 hover:border-paper hover:text-paper"
+                  }`}
+                >
+                  Dag {i + 1} · {d.weekdayLabel.slice(0, 3)} {d.dateLabel}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Levels */}
         <div className="space-y-20">
-          {visible.map((group) => (
+          {grouped.map((group) => (
             <div key={group.level}>
-              {/* Level header */}
               <div className="flex items-baseline gap-6 mb-8">
                 <span className="font-display italic text-5xl md:text-6xl text-terracotta/90 leading-none">
                   {LEVEL_META[group.level].mark}
@@ -130,7 +153,6 @@ export function Pulse() {
                 </div>
               </div>
 
-              {/* Items */}
               <div className="grid md:grid-cols-2 gap-6">
                 {group.items.map((item, i) => (
                   <motion.article
@@ -190,7 +212,34 @@ export function Pulse() {
           ))}
         </div>
 
-        {/* Footer note */}
+        {/* Sneak peek på övriga dagar */}
+        {upcomingDays.length > 0 && (
+          <div className="mt-20 pt-10 border-t border-paper/15">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-paper/50 mb-6">
+              Sneak peek · Resten av din vistelse
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              {upcomingDays.map((d, i) => (
+                <button
+                  key={d.date}
+                  onClick={() => setDay(dayIndex + 1 + i)}
+                  className="text-left border border-paper/15 p-5 hover:border-terracotta/60 hover:bg-paper/[0.04] transition-colors"
+                >
+                  <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-terracotta mb-2">
+                    Dag {dayIndex + 2 + i} · {d.weekdayLabel} {d.dateLabel}
+                  </p>
+                  <h5 className="font-display text-xl leading-tight text-balance">
+                    {d.headline}
+                  </h5>
+                  <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-paper/50">
+                    Visa dagens puls →
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-20 pt-8 border-t border-paper/15 grid md:grid-cols-12 gap-6 items-end">
           <p className="md:col-span-8 font-display italic text-lg md:text-xl text-paper/75 text-pretty max-w-2xl">
             En lokal hade vetat det här utan att tänka på det. Det är vad Parranda gör — en stad
@@ -209,28 +258,5 @@ export function Pulse() {
         }
       `}</style>
     </section>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`font-mono text-[10px] uppercase tracking-[0.2em] px-3 py-2 border transition-colors ${
-        active
-          ? "border-terracotta bg-terracotta text-paper"
-          : "border-paper/25 text-paper/70 hover:border-paper hover:text-paper"
-      }`}
-    >
-      {children}
-    </button>
   );
 }
