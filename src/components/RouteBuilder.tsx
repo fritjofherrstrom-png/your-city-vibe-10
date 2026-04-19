@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { CITIES, VIBES, type Vibe } from "@/data/cities";
+import { CITIES, VIBES, type Stop, type Vibe } from "@/data/cities";
 import {
   getCityWideSignals,
   getNeighborhoodAdvice,
@@ -11,6 +11,38 @@ import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
 import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
 import { walkLabel, type TripSearch } from "@/lib/trip";
 import { TripPlanner } from "@/components/TripPlanner";
+import { getWeather, isRainMode, CONDITION_GLYPH, CONDITION_LABEL } from "@/lib/weather";
+
+/** Stop-typer som räknas som "inomhus" — funkar bra i regn. */
+const INDOOR_TYPES = new Set([
+  "Museum",
+  "Konst",
+  "Konsthall",
+  "Bokhandel",
+  "Bar",
+  "Cocktails",
+  "Vin",
+  "Vinbar",
+  "Klubb",
+  "Pivnice",
+  "Hak",
+  "Caffè",
+  "Kaffe",
+  "Fika",
+  "Lunch",
+  "Middag",
+  "Smörgås",
+  "Cocktail",
+  "Aperitivo",
+  "Aperitif",
+  "Apertivo",
+  "Hemlighet",
+  "Arkitektur",
+]);
+
+function isIndoor(stop: Stop): boolean {
+  return INDOOR_TYPES.has(stop.type);
+}
 
 const ROME = CITIES.find((c) => c.id === "rome")!;
 
