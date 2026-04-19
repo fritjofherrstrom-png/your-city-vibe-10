@@ -70,6 +70,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Inget derby i kväll — men Lazio spelar i Europa League",
         where: "Stadio Olimpico + barer i Prati",
         when: "Avspark 21:00",
+        startsAt: "21:00",
+        endsAt: "23:00",
         blurb:
           "Inte derbyt, men tillräckligt för att Prati och Flaminio ska vara fulla av blå tröjor från 18:00. Tunnelbana A blir överfull mellan 19 och 20.",
         whyItMatters:
@@ -96,6 +98,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Mercato Monti har öppnat för säsongen",
         where: "Via Leonina, Monti",
         when: "10–20",
+        startsAt: "10:00",
+        endsAt: "20:00",
         blurb:
           "Vintage, unga designers, vinyl, italienskt hantverk. Andra helgen efter påsk är alltid den bästa — full uppställning, lugnt tempo, säljarna pratar.",
         whyItMatters:
@@ -109,6 +113,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Piazza-spelning på Largo Spartaco",
         where: "Pigneto",
         when: "Från 19:30, spontant",
+        startsAt: "19:30",
+        endsAt: "23:00",
         blurb:
           "Två killar med dragspel och gitarr drar upp varje torsdag när vädret tillåter. Stornello, lite Lucio Battisti, någon som ropar Sara perché ti amo runt 22. Ingen affisch, ingen entré.",
         whyItMatters:
@@ -122,6 +128,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Trastevere är full av studiegrupper i kväll",
         where: "Piazza Santa Maria + omkring",
         when: "Från 20:00",
+        startsAt: "20:00",
+        endsAt: "23:30",
         blurb:
           "Vårterminens utbytesstudenter har precis upptäckt aperitivo. Det är charmigt en gång. Inte två.",
         whyItMatters:
@@ -134,6 +142,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Trio italiano på Gregory's",
         where: "Via Gregoriana 54a, vid Spanska trappan",
         when: "Två set: 22:00 och 23:30",
+        startsAt: "22:00",
+        endsAt: "00:30",
         blurb:
           "Lokal trio, standards och en del Pino Daniele. Mörkt rum, rött ljus, bartendern minns vad du drack förra gången. Ingen entré, en drink-minimum.",
         whyItMatters:
@@ -147,6 +157,8 @@ export const ROME_PULSE_DAYS: PulseDay[] = [
         title: "Hotel Locarnos takbar öppnar i kväll",
         where: "Via della Penna 22, nära Piazza del Popolo",
         when: "Från 18:30",
+        startsAt: "18:30",
+        endsAt: "01:00",
         blurb:
           "Första kvällen för säsongen. Liberty-stil, vinrankor, utsikt mot Villa Borghese. Negroni 14 €, men du betalar för utsikten och för att vara där den första kvällen.",
         whyItMatters:
