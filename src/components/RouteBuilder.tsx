@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { ArrowUp } from "lucide-react";
 import { CITIES, VIBES, type Stop, type Vibe } from "@/data/cities";
 import {
   getCityWideSignals,
@@ -10,34 +11,14 @@ import {
 import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
 import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
 import { walkLabel, type TripSearch } from "@/lib/trip";
-import { TripPlanner } from "@/components/TripPlanner";
 import { getWeather, isRainMode, CONDITION_GLYPH, CONDITION_LABEL } from "@/lib/weather";
 
 /** Stop-typer som räknas som "inomhus" — funkar bra i regn. */
 const INDOOR_TYPES = new Set([
-  "Museum",
-  "Konst",
-  "Konsthall",
-  "Bokhandel",
-  "Bar",
-  "Cocktails",
-  "Vin",
-  "Vinbar",
-  "Klubb",
-  "Pivnice",
-  "Hak",
-  "Caffè",
-  "Kaffe",
-  "Fika",
-  "Lunch",
-  "Middag",
-  "Smörgås",
-  "Cocktail",
-  "Aperitivo",
-  "Aperitif",
-  "Apertivo",
-  "Hemlighet",
-  "Arkitektur",
+  "Museum", "Konst", "Konsthall", "Bokhandel", "Bar", "Cocktails", "Vin",
+  "Vinbar", "Klubb", "Pivnice", "Hak", "Caffè", "Kaffe", "Fika", "Lunch",
+  "Middag", "Smörgås", "Cocktail", "Aperitivo", "Aperitif", "Apertivo",
+  "Hemlighet", "Arkitektur",
 ]);
 
 function isIndoor(stop: Stop): boolean {
@@ -55,7 +36,6 @@ export function RouteBuilder() {
 
   const route = ROME.routes[vibe];
 
-  // Vilken pulse-dag visar vi i ruttens kontext?
   const tripDayCount = useMemo(() => {
     const start = new Date(search.start + "T00:00:00");
     const end = new Date(search.end + "T00:00:00");
@@ -68,6 +48,7 @@ export function RouteBuilder() {
 
   const dayIndex = Math.min(search.day, tripDayCount - 1);
   const activeDay = ROME_PULSE_DAYS[dayIndex] ?? getPulseDay(undefined);
+  const visibleDays = ROME_PULSE_DAYS.slice(0, tripDayCount);
 
   const cityWide = useMemo(
     () => getCityWideSignals(vibe, activeDay),
@@ -86,36 +67,72 @@ export function RouteBuilder() {
     });
   };
 
+  const setDay = (i: number) => {
+    navigate({
+      to: "/",
+      search: (prev) => ({ ...prev, day: i }),
+      hash: "route",
+    });
+  };
+
+  const scrollToHero = () => {
+    document.querySelector("section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const activeVibe = VIBES.find((v) => v.id === vibe);
+
   return (
-    <section id="route" className="bg-background py-24 md:py-32">
+    <section id="route" className="bg-background py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-6">
-        {/* Trip-summary banner — visar vad URL-state säger om resan */}
-        <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border border-foreground/20 bg-sand/50 px-5 py-4">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              Din resa
+        {/* ── Tunn kontrollremsa ── dag-tabs + zon + walk + justera ── */}
+        <div className="mb-10 border-y border-foreground/15 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <span>
+              Bor i <span className="text-foreground">{homeZone}</span>
             </span>
-            <span className="font-display">
-              {activeDay.weekdayLabel} {activeDay.dateLabel}
-              {tripDayCount > 1 && (
-                <span className="text-muted-foreground">
-                  {" "}· dag {dayIndex + 1} av {tripDayCount}
-                </span>
-              )}
+            <span className="opacity-30">·</span>
+            <span>
+              <span className="text-foreground">{walkLimit} min</span> · {walkLabel(walkLimit)}
             </span>
-            <span className="font-display">
-              Bor i <em className="italic">{homeZone}</em>
-            </span>
-            <span className="font-display">
-              Promenad: {walkLimit} min · {walkLabel(walkLimit)}
-            </span>
-            <span className="font-display flex items-center gap-1.5">
+            <span className="opacity-30">·</span>
+            <span className="flex items-center gap-1.5">
               <span aria-hidden>{CONDITION_GLYPH[weather.condition]}</span>
-              {weather.highC}° · {CONDITION_LABEL[weather.condition]}
+              <span className="text-foreground">{weather.highC}°</span> · {CONDITION_LABEL[weather.condition]}
             </span>
           </div>
-          <TripPlanner />
+          <button
+            onClick={scrollToHero}
+            className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-accent transition-colors flex items-center gap-1.5"
+          >
+            <ArrowUp className="h-3 w-3" />
+            Justera signaler
+          </button>
         </div>
+
+        {/* Day-tabs — bara om man har flera dagar */}
+        {visibleDays.length > 1 && (
+          <div className="mb-12 flex flex-wrap items-center gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground mr-1">
+              Dag
+            </span>
+            {visibleDays.map((d, i) => {
+              const active = i === dayIndex;
+              return (
+                <button
+                  key={d.date}
+                  onClick={() => setDay(i)}
+                  className={`font-mono text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 border transition-colors ${
+                    active
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-foreground/20 text-muted-foreground hover:border-foreground hover:text-foreground"
+                  }`}
+                >
+                  {i + 1} · {d.weekdayLabel.slice(0, 3)} {d.dateLabel}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {rainMode && (
           <div className="mb-10 border-l-2 border-accent bg-accent/10 px-5 py-4">
@@ -128,52 +145,7 @@ export function RouteBuilder() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-12 gap-12 mb-12">
-          <div className="md:col-span-5">
-            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-4">
-              § Kapitel 03 · Bygg din dag
-            </p>
-            <h2 className="font-display text-4xl md:text-5xl leading-[1.05] tracking-tight">
-              Vad är det för<br />
-              <em className="italic">slags</em> dag i Rom?
-            </h2>
-            <p className="mt-6 text-muted-foreground max-w-md">
-              Samma stad, fyra helt olika dagar. Rutten anpassas till vad som faktiskt händer
-              just i dag — och hur långt du orkar gå från {homeZone}.
-            </p>
-          </div>
-
-          <div className="md:col-span-7 grid sm:grid-cols-2 gap-3">
-            {VIBES.map((v) => {
-              const active = vibe === v.id;
-              return (
-                <button
-                  key={v.id}
-                  onClick={() => setVibe(v.id)}
-                  className={`text-left p-5 border transition-all ${
-                    active
-                      ? "border-accent bg-accent text-accent-foreground"
-                      : "border-foreground/20 hover:border-foreground bg-background"
-                  }`}
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="font-display text-xl">{v.label}</span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">
-                      {active ? "●" : "○"}
-                    </span>
-                  </div>
-                  <p className={`mt-2 text-sm ${active ? "opacity-90" : "text-muted-foreground"}`}>
-                    {v.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="editorial-rule my-16" />
-
-        {/* Route output */}
+        {/* ── Resultatet — det här är HUVUDPRODUKTEN ────────────── */}
         <AnimatePresence mode="wait">
           <motion.div
             key={`${vibe}-${dayIndex}-${homeZone}-${walkLimit}`}
@@ -182,21 +154,23 @@ export function RouteBuilder() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="grid md:grid-cols-12 gap-10 mb-12 items-end">
-              <div className="md:col-span-8">
-                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-accent mb-4">
-                  Rutten · Rom · {VIBES.find((v) => v.id === vibe)?.label}
+            <div className="grid md:grid-cols-12 gap-10 mb-10 items-end">
+              <div className="md:col-span-9">
+                <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent mb-4">
+                  § Din dag · {activeDay.weekdayLabel} {activeDay.dateLabel}
                 </p>
-                <h3 className="font-display text-3xl md:text-5xl leading-[1.05] tracking-tight text-balance">
+                <h2 className="font-display text-4xl md:text-6xl leading-[1.02] tracking-tight text-balance">
                   {route.title}
-                </h3>
-                <p className="mt-4 text-lg italic font-display text-muted-foreground">
+                </h2>
+                <p className="mt-5 text-lg md:text-xl italic font-display text-muted-foreground text-pretty max-w-2xl">
                   {route.subtitle}
                 </p>
               </div>
-              <div className="md:col-span-4 md:text-right">
+              <div className="md:col-span-3 md:text-right">
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  {route.stops.length} stopp · ca {(route.stops.length * 1.2) | 0}h
+                  {route.stops.length} stopp
+                  <br />
+                  ca {(route.stops.length * 1.2) | 0}h
                 </p>
               </div>
             </div>
@@ -210,7 +184,7 @@ export function RouteBuilder() {
                     style={{ animation: "pulseDot 2.4s ease-in-out infinite" }}
                   />
                   <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                    Puls påverkar din dag · {activeDay.weekdayLabel} {activeDay.dateLabel}
+                    Puls påverkar din dag
                   </p>
                 </div>
                 <ul className="space-y-3">
@@ -299,7 +273,6 @@ export function RouteBuilder() {
                         )}
                       </div>
 
-                      {/* Walk-time annoteringar */}
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                         {i === 0 && fromHome !== null && (
                           <span>↳ {fromHome} min från {homeZone}</span>
@@ -318,7 +291,6 @@ export function RouteBuilder() {
                         </p>
                       )}
 
-                      {/* Pulse-annoteringar för detta stopp */}
                       {stopSignals.map((sig) => (
                         <div
                           key={sig.id}
@@ -346,21 +318,70 @@ export function RouteBuilder() {
                 );
               })}
             </ol>
-
-            <div className="mt-12 flex flex-wrap items-center justify-between gap-4 p-6 border border-foreground/30 bg-sand/40">
-              <p className="font-display italic text-lg max-w-md">
-                Det här är en smakbit. I appen får du karta, tidsoptimering och en knapp för
-                "byt ett stopp".
-              </p>
-              <a
-                href="#manifesto"
-                className="font-mono text-xs uppercase tracking-[0.2em] underline underline-offset-8 decoration-foreground/40 hover:text-accent hover:decoration-accent transition-colors whitespace-nowrap"
-              >
-                Läs manifestet →
-              </a>
-            </div>
           </motion.div>
         </AnimatePresence>
+
+        {/* ── Byt ton ── sekundärt, EFTER rutten ─────────────────── */}
+        <div className="mt-20 pt-12 border-t border-foreground/20">
+          <div className="flex items-baseline justify-between gap-6 mb-6 flex-wrap">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">
+                § Byt ton
+              </p>
+              <h3 className="font-display text-2xl md:text-3xl tracking-tight">
+                Samma stad,{" "}
+                <em className="italic">en annan</em> dag?
+              </h3>
+            </div>
+            <p className="font-display italic text-sm md:text-base text-muted-foreground max-w-sm text-pretty">
+              Du kör <span className="text-foreground not-italic">{activeVibe?.label}</span> nu. Klicka för att se hur dagen blir med en annan stämning.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {VIBES.map((v) => {
+              const active = vibe === v.id;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setVibe(v.id)}
+                  className={`text-left p-4 border transition-all ${
+                    active
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : "border-foreground/20 hover:border-foreground bg-background"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-display text-lg">{v.label}</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] opacity-60">
+                      {active ? "●" : "○"}
+                    </span>
+                  </div>
+                  <p
+                    className={`mt-1 text-xs leading-snug ${
+                      active ? "opacity-90" : "text-muted-foreground"
+                    }`}
+                  >
+                    {v.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-16 flex flex-wrap items-center justify-between gap-4 p-6 border border-foreground/30 bg-sand/40">
+          <p className="font-display italic text-lg max-w-md">
+            Det här är en smakbit. I appen får du karta, tidsoptimering och en knapp för
+            "byt ett stopp".
+          </p>
+          <a
+            href="#manifesto"
+            className="font-mono text-xs uppercase tracking-[0.2em] underline underline-offset-8 decoration-foreground/40 hover:text-accent hover:decoration-accent transition-colors whitespace-nowrap"
+          >
+            Läs manifestet →
+          </a>
+        </div>
       </div>
     </section>
   );
