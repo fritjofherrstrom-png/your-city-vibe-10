@@ -67,7 +67,7 @@ export function TripPlanner() {
 
     navigate({
       to: "/",
-      search: (prev: TripSearch) => ({
+      search: (prev) => ({
         ...prev,
         start,
         end,
