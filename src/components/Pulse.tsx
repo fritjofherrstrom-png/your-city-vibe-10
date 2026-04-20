@@ -9,6 +9,8 @@ import { PulseDayTabs } from "./pulse/PulseDayTabs";
 import { PulseTimeline } from "./pulse/PulseTimeline";
 import { PulseLevelGroup } from "./pulse/PulseLevelGroup";
 import { PulseSneakPeek } from "./pulse/PulseSneakPeek";
+import { PulseNowFocus } from "./pulse/PulseNowFocus";
+import type { RomeZone } from "@/data/rome-geography";
 
 const LEVEL_ORDER: PulseLevel[] = ["city", "neighborhood", "venue"];
 
@@ -80,6 +82,14 @@ export function Pulse() {
         />
 
         <PulseDayTabs days={visibleDays} activeIndex={dayIndex} onSelect={setDay} />
+
+        <PulseNowFocus
+          items={annotated}
+          refMinutes={refMinutes}
+          homeZone={search.zone as RomeZone}
+          walkLimit={search.walk}
+          isToday={isToday}
+        />
 
         <PulseTimeline items={annotated} refMinutes={refMinutes} />
 
