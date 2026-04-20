@@ -81,7 +81,7 @@ export function RouteBuilder() {
   const setVibe = (v: Vibe) => {
     navigate({
       to: "/",
-      search: (prev: TripSearch) => ({ ...prev, vibe: v }),
+      search: (prev) => ({ ...prev, vibe: v }),
       hash: "route",
     });
   };
