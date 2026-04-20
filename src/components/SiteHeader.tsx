@@ -1,4 +1,3 @@
-import { TripPlanner } from "@/components/TripPlanner";
 import { useSearch } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ROME_PULSE_DAYS } from "@/data/pulse";
@@ -35,14 +34,11 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-8 text-sm">
           <a href="#concept" className="hover:text-accent transition-colors">Konceptet</a>
           <a href="#pulse" className="hover:text-accent transition-colors">Just nu i Rom</a>
-          <a href="#route" className="hover:text-accent transition-colors">Bygg din dag</a>
+          <a href="#route" className="hover:text-accent transition-colors">Din dag</a>
           <a href="#manifesto" className="hover:text-accent transition-colors">Manifest</a>
         </nav>
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:block">
-            <WeatherStrip weather={weather} tone="paper" compact />
-          </div>
-          <TripPlanner />
+        <div className="hidden lg:block">
+          <WeatherStrip weather={weather} tone="paper" compact />
         </div>
       </div>
     </header>
