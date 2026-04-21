@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowUp } from "lucide-react";
 import { CITIES, VIBES, type Stop, type Vibe } from "@/data/cities";
@@ -8,6 +8,7 @@ import {
   getNeighborhoodAdvice,
   getPulseSignalsForStop,
 } from "@/lib/pulse-match";
+import { composeDay } from "@/lib/compose-day";
 import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
 import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
 import { walkLabel, type TripSearch } from "@/lib/trip";
