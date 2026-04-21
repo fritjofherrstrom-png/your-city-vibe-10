@@ -60,6 +60,29 @@ export function RouteBuilder() {
   const weather = useMemo(() => getWeather(activeDay.date), [activeDay.date]);
   const rainMode = isRainMode(weather);
 
+  // Kompositionsmotorn — pulse blir kandidater till stopp, inte bara fotnot.
+  const composed = useMemo(
+    () => composeDay({ stops: route.stops, pulseDay: activeDay, vibe, zone: homeZone }),
+    [route.stops, activeDay, vibe, homeZone],
+  );
+
+  // Lokala byten — vilka stopp har användaren bytt mot pulse-alternativet.
+  // Nyckeln är "vibe-day-index" så bytena nollställs när kompositionen ändras.
+  const compKey = `${vibe}-${dayIndex}-${homeZone}`;
+  const [swapped, setSwapped] = useState<{ key: string; indexes: Set<number> }>({
+    key: compKey,
+    indexes: new Set(),
+  });
+  const activeSwaps = swapped.key === compKey ? swapped.indexes : new Set<number>();
+  const toggleSwap = (i: number) => {
+    setSwapped((prev) => {
+      const base = prev.key === compKey ? new Set(prev.indexes) : new Set<number>();
+      if (base.has(i)) base.delete(i);
+      else base.add(i);
+      return { key: compKey, indexes: base };
+    });
+  };
+
   const setVibe = (v: Vibe) => {
     navigate({
       to: "/",
