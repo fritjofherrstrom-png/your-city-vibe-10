@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowUp } from "lucide-react";
 import { CITIES, VIBES, type Stop, type Vibe } from "@/data/cities";
@@ -8,6 +8,7 @@ import {
   getNeighborhoodAdvice,
   getPulseSignalsForStop,
 } from "@/lib/pulse-match";
+import { composeDay } from "@/lib/compose-day";
 import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
 import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
 import { walkLabel, type TripSearch } from "@/lib/trip";
@@ -58,6 +59,29 @@ export function RouteBuilder() {
 
   const weather = useMemo(() => getWeather(activeDay.date), [activeDay.date]);
   const rainMode = isRainMode(weather);
+
+  // Kompositionsmotorn — pulse blir kandidater till stopp, inte bara fotnot.
+  const composed = useMemo(
+    () => composeDay({ stops: route.stops, pulseDay: activeDay, vibe, zone: homeZone }),
+    [route.stops, activeDay, vibe, homeZone],
+  );
+
+  // Lokala byten — vilka stopp har användaren bytt mot pulse-alternativet.
+  // Nyckeln är "vibe-day-index" så bytena nollställs när kompositionen ändras.
+  const compKey = `${vibe}-${dayIndex}-${homeZone}`;
+  const [swapped, setSwapped] = useState<{ key: string; indexes: Set<number> }>({
+    key: compKey,
+    indexes: new Set(),
+  });
+  const activeSwaps = swapped.key === compKey ? swapped.indexes : new Set<number>();
+  const toggleSwap = (i: number) => {
+    setSwapped((prev) => {
+      const base = prev.key === compKey ? new Set(prev.indexes) : new Set<number>();
+      if (base.has(i)) base.delete(i);
+      else base.add(i);
+      return { key: compKey, indexes: base };
+    });
+  };
 
   const setVibe = (v: Vibe) => {
     navigate({
@@ -215,14 +239,35 @@ export function RouteBuilder() {
             )}
 
             <ol className="space-y-0 border-t border-foreground/20">
-              {route.stops.map((stop, i) => {
+              {composed.stops.map(({ stop: curated, alternative }, i) => {
+                const isSwapped = activeSwaps.has(i) && alternative !== null;
+
+                // Effektiv stop-data: antingen kuraterat eller pulse-alternativet (mappat till Stop-form)
+                const stop: Stop = isSwapped && alternative
+                  ? {
+                      time: alternative.pulse.startsAt ?? curated.time,
+                      title: alternative.pulse.title,
+                      type: alternative.pulse.kind,
+                      neighborhood: alternative.pulse.where,
+                      blurb: alternative.pulse.blurb,
+                      duration: alternative.pulse.endsAt
+                        ? `till ${alternative.pulse.endsAt}`
+                        : curated.duration,
+                      tip: alternative.pulse.whyItMatters,
+                    }
+                  : curated;
+
                 const stopSignals = getPulseSignalsForStop(stop, vibe, activeDay);
                 const stopZone = neighborhoodToZone(stop.neighborhood);
                 const fromHome = stopZone ? walkMinutesBetween(homeZone, stopZone) : null;
                 const fromPrev = (() => {
                   if (i === 0) return null;
-                  const prev = route.stops[i - 1];
-                  const prevZone = neighborhoodToZone(prev.neighborhood);
+                  const prevComposed = composed.stops[i - 1];
+                  const prevSwapped = activeSwaps.has(i - 1) && prevComposed.alternative !== null;
+                  const prevHood = prevSwapped && prevComposed.alternative
+                    ? prevComposed.alternative.pulse.where
+                    : prevComposed.stop.neighborhood;
+                  const prevZone = neighborhoodToZone(prevHood);
                   if (!prevZone || !stopZone) return null;
                   return walkMinutesBetween(prevZone, stopZone);
                 })();
@@ -232,7 +277,7 @@ export function RouteBuilder() {
 
                 return (
                   <motion.li
-                    key={`${stop.title}-${i}`}
+                    key={`${i}-${isSwapped ? "swap" : "base"}`}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.06 }}
@@ -256,7 +301,12 @@ export function RouteBuilder() {
                         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                           {stop.type}
                         </span>
-                        {stopSignals.length > 0 && (
+                        {isSwapped && (
+                          <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-terracotta border border-terracotta px-1.5 py-0.5">
+                            ↗ från dagens puls
+                          </span>
+                        )}
+                        {!isSwapped && stopSignals.length > 0 && (
                           <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-terracotta border border-terracotta/50 px-1.5 py-0.5">
                             ◉ puls
                           </span>
@@ -266,7 +316,7 @@ export function RouteBuilder() {
                             ⚠ över din promenadgräns
                           </span>
                         )}
-                        {rainMode && isIndoor(stop) && (
+                        {!isSwapped && rainMode && isIndoor(stop) && (
                           <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent border border-accent/50 px-1.5 py-0.5">
                             ▣ torrt val
                           </span>
@@ -291,7 +341,37 @@ export function RouteBuilder() {
                         </p>
                       )}
 
-                      {stopSignals.map((sig) => (
+                      {/* ── Pulse-alternativ: motorn viskar ett alternativ ── */}
+                      {alternative && (
+                        <div className="mt-5 border-l-2 border-terracotta/70 pl-4 py-2 bg-sand/30">
+                          <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-terracotta mb-1.5">
+                            {isSwapped ? "↺ Originalförslag" : "↗ Ikväll finns det här istället"}
+                          </p>
+                          <p className="text-sm font-display italic text-pretty">
+                            {isSwapped ? curated.title : alternative.pulse.title}
+                            <span className="text-muted-foreground not-italic font-sans">
+                              {" — "}
+                              {isSwapped
+                                ? `${curated.type.toLowerCase()} i ${curated.neighborhood}`
+                                : alternative.why}
+                            </span>
+                          </p>
+                          {!isSwapped && (
+                            <p className="text-xs text-muted-foreground mt-1.5 text-pretty">
+                              {alternative.pulse.whyItMatters}
+                            </p>
+                          )}
+                          <button
+                            onClick={() => toggleSwap(i)}
+                            className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.25em] text-foreground hover:text-accent transition-colors underline underline-offset-4 decoration-foreground/30 hover:decoration-accent"
+                          >
+                            {isSwapped ? "← Tillbaka till originalet" : "Byt ut det här stoppet →"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Befintliga pulse-kommentarer (kvarterspuls, varningar) — bara på kuraterade stopp */}
+                      {!isSwapped && stopSignals.map((sig) => (
                         <div
                           key={sig.id}
                           className="mt-4 pl-3 border-l-2 border-terracotta/60"
