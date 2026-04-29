@@ -11,6 +11,7 @@ import {
 import { composeDay } from "@/lib/compose-day";
 import { getPulseDay, ROME_PULSE_DAYS } from "@/data/pulse";
 import { neighborhoodToZone, walkMinutesBetween, type RomeZone } from "@/data/rome-geography";
+import { getCity } from "@/cities/registry";
 import { walkLabel, type TripSearch } from "@/lib/trip";
 import { getWeather, isRainMode, CONDITION_GLYPH, CONDITION_LABEL } from "@/lib/weather";
 
@@ -62,7 +63,7 @@ export function RouteBuilder() {
 
   // Kompositionsmotorn — pulse blir kandidater till stopp, inte bara fotnot.
   const composed = useMemo(
-    () => composeDay({ stops: route.stops, pulseDay: activeDay, vibe, zone: homeZone }),
+    () => composeDay({ city: getCity("rome"), stops: route.stops, pulseDay: activeDay, vibe, zone: homeZone }),
     [route.stops, activeDay, vibe, homeZone],
   );
 
