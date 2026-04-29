@@ -5,18 +5,14 @@
  * kunna *ersätta* ett kuraterat stopp idag (rätt tid, rätt vibe, rätt zon).
  * Vi byter inget automatiskt — vi *föreslår*. Användaren väljer.
  *
- * Filosofi:
- *   - Kuratorn skriver alltid första utkastet (route.stops).
- *   - Pulsen får viska: "i kväll finns det här istället, och det är bättre."
- *   - Användaren bestämmer.
+ * Stadsagnostisk: tar en `City` som beskriver zoner och promenadtider.
+ * Rom är bara första staden. Lissabon, Tokyo: skicka annan City — motorn
+ * fungerar oförändrat.
  */
 import type { PulseDay, PulseItem } from "@/data/pulse";
 import type { Stop, Vibe } from "@/data/cities";
-import {
-  neighborhoodToZone,
-  walkMinutesBetween,
-  type RomeZone,
-} from "@/data/rome-geography";
+import type { City, ZoneId } from "@/cities/types";
+import { walkMinutesBetween } from "@/cities/types";
 
 export type PulseAlternative = {
   pulse: PulseItem;
@@ -46,16 +42,12 @@ function parseTime(t: string | undefined): number | null {
   return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
 }
 
-/** Försök hitta zon för en pulse-item via dess where-text. */
-function pulseZone(item: PulseItem): RomeZone | null {
-  return neighborhoodToZone(item.where);
-}
-
 /**
  * Hur väl matchar en pulse-venue ett kuraterat stopp idag?
  * Returnerar score 0–100, eller null om den inte matchar alls.
  */
 function scoreMatch(
+  city: City,
   stop: Stop,
   stopTime: number | null,
   pulse: PulseItem,
@@ -81,10 +73,10 @@ function scoreMatch(
   if (timeDiff > 90) return null;
 
   // Zon: pulse-zon måste vara samma som stoppets zon, eller max 20 min promenad bort.
-  const sZone = neighborhoodToZone(stop.neighborhood);
-  const pZone = pulseZone(pulse);
+  const sZone: ZoneId | null = city.resolveNeighborhood(stop.neighborhood);
+  const pZone: ZoneId | null = city.resolveNeighborhood(pulse.where);
   if (!sZone || !pZone) return null;
-  const zoneWalk = walkMinutesBetween(sZone, pZone);
+  const zoneWalk = walkMinutesBetween(city, sZone, pZone);
   if (zoneWalk > 20) return null;
 
   // Score: närmare i tid + närmare i zon + explicit vibe-träff = högre.
@@ -108,16 +100,22 @@ function scoreMatch(
 /**
  * Komponera dagen: för varje kuraterat stopp, leta efter bästa pulse-alternativ.
  * Pulse-items som matchar vibe men inte ersätter något läggs som bonus.
+ *
+ * `city` är obligatorisk — motorn vet inget om Rom specifikt. Den vet bara
+ * "givet denna stads zoner och promenadtider, vad passar".
  */
 export function composeDay({
+  city,
   stops,
   pulseDay,
   vibe,
 }: {
+  city: City;
   stops: Stop[];
   pulseDay: PulseDay;
   vibe: Vibe;
-  zone: RomeZone;
+  /** Behållen för bakåtkompatibilitet i anrop. Används inte längre direkt. */
+  zone?: ZoneId;
 }): ComposedDay {
   // Vi vill inte föreslå samma pulse-item som alternativ till flera stopp.
   const claimed = new Set<string>();
@@ -130,7 +128,7 @@ export function composeDay({
     for (const pulse of pulseDay.items) {
       if (claimed.has(pulse.id)) continue;
 
-      const match = scoreMatch(stop, stopTime, pulse, vibe);
+      const match = scoreMatch(city, stop, stopTime, pulse, vibe);
       if (!match) continue;
 
       if (!best || match.score > best.score) {
