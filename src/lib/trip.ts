@@ -5,29 +5,22 @@ import type { RomeZone } from "@/data/rome-geography";
 /**
  * Trip state lever i URL:en — delbart, refresh-säkert.
  * Datum lagras som ISO-strängar (yyyy-mm-dd).
+ *
+ * Stadsagnostiskt: `city` väljer vilken City-config som används. `zone` är
+ * en fri sträng — varje stad äger sin egen valideringslista (resolveNeighborhood
+ * + zones). URL-schemat ska aldrig låsa zoner till en specifik stad.
  */
-
-const ZONE_VALUES = [
-  "trastevere",
-  "centro",
-  "monti",
-  "testaccio",
-  "aventino",
-  "pigneto",
-  "esquilino",
-  "centocelle",
-  "ostiense",
-  "prati",
-] as const;
 
 const VIBE_VALUES = ["slow", "buzzy", "romantic", "curious"] as const;
 
 export const tripSearchSchema = z.object({
+  /** Vald stad. Validering mot registry sker i komponentlagret. */
+  city: fallback(z.string().min(1).max(40), "rome").default("rome"),
   vibe: fallback(z.enum(VIBE_VALUES), "slow").default("slow"),
   /** Aktivt resedag-index (0 = första dagen). */
   day: fallback(z.number().int().min(0).max(30), 0).default(0),
-  /** Hotellzon i Rom. */
-  zone: fallback(z.enum(ZONE_VALUES), "trastevere").default("trastevere"),
+  /** Hotellzon — fri sträng, validering per stad. */
+  zone: fallback(z.string().min(1).max(40), "trastevere").default("trastevere"),
   /** Promenadtolerans per förflyttning, i minuter. */
   walk: fallback(z.number().int().min(5).max(45), 15).default(15),
   /** Resans startdatum, ISO yyyy-mm-dd. */
@@ -64,5 +57,23 @@ export function tripDates(startISO: string, endISO: string): string[] {
   return days;
 }
 
-/** Re-export för bekvämlighet. */
+/**
+ * Räkna antal dagar i resan, kapat till `maxDays` (vanligtvis stadens
+ * tillgängliga pulse-dagar). Tidigare duplicerad i Pulse + RouteBuilder.
+ */
+export function calcTripDayCount(
+  startISO: string,
+  endISO: string,
+  maxDays: number,
+): number {
+  const start = new Date(startISO + "T00:00:00");
+  const end = new Date(endISO + "T00:00:00");
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+  return Math.min(
+    maxDays,
+    Math.round((end.getTime() - start.getTime()) / 86400000) + 1,
+  );
+}
+
+/** Re-export för bekvämlighet. Nya komponenter bör använda ZoneId från @/cities/types. */
 export type { RomeZone };
